@@ -242,7 +242,7 @@ function printFavoriteCities() {
   const statsMobile = document.createElement("p");
   statsMobile.classList.add("stats-mobile");
 
-  cityDataFav.classList.append(favCity, cityCardMain, stats, statsMobile)
+  cityDataFav.append(favCity, cityCardMain, stats, statsMobile)
 }
 
 
