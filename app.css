@@ -218,7 +218,7 @@ form{
 .cities{
     width: 100%;
     height: fit-content;
-    display: flex;
+    display: none;
     padding: 1rem;
     align-items: center;
     gap: 1rem;
@@ -343,7 +343,27 @@ hr{
     line-height: normal;
 }
 
+.stats-fig1{
+    color: #ffffff;
+    text-align: center;
+    font-family: Inter;
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
 .detail{
+    color: #585B60;
+    text-align: center;
+    font-family: Inter;
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.detail1{
     color: #585B60;
     text-align: center;
     font-family: Inter;
@@ -368,7 +388,6 @@ hr{
     .cities{
         width: 100%;
         height: fit-content;
-        display: flex;
         flex-direction: column;
     }
 
