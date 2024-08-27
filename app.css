@@ -201,8 +201,9 @@ form{
 }
 
 #input:focus{
+    outline: none;
     border: none;
-    background: rgba(255, 255, 255, 0.065);
+    /* background: rgba(255, 255, 255, 0.065); */
 }
 
 #input::placeholder{

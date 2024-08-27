@@ -24,12 +24,29 @@ input.addEventListener("input", function (event) {
 
 let citiesArray = [];
 
-function checkCitiesArray() {
-  if (citiesArray === 0) {
-    cityList.style.display = "none";
+// Add this function to update the favorite button state
+function updateFavButtonState(isFavorite) {
+  if (isFavorite) {
+    favButton.querySelector('path').setAttribute('fill', 'orange');
   } else {
-    cityList.style.display = "flex";
+    favButton.querySelector('path').setAttribute('fill', 'white');
   }
+}
+
+function checkCitiesArray() {
+  if (citiesArray.length > 0) {
+    cityList.style.display = 'flex';
+  } else {
+    cityList.style.display = 'none';
+  }
+}
+
+fetchCityDataStored();
+checkCitiesArray();
+
+// Add this function to check if a city is already in favorites
+function isCityFavorite(cityName, countryCode) {
+  return citiesArray.some(city => city.cityName === cityName && city.cityCountry === countryCode);
 }
 
 //collect user input use it to run the fetch for the weather api, dynamically edit the main info div
@@ -48,6 +65,7 @@ form.addEventListener("submit", function (event) {
       })
       .then((weatherInfo) => {
         printMainData(weatherInfo);
+        updateFavButtonState(isCityFavorite(weatherInfo.name, weatherInfo.sys.country));
       });
   }
   weatherData();
@@ -126,7 +144,7 @@ form.addEventListener("submit", function (event) {
       } else if (weatherType.innerText === "Snow") {
         mainInfo.style.backgroundImage = "url('./images/snow.png')";
       } else if (weatherType.innerText === "Sunshine") {
-        mainInfo.style.backgroundImage = "url('./images/sunshine.png)";
+        mainInfo.style.backgroundImage = "url('./images/sunshine.png')";
       } else {
         mainInfo.style.backgroundImage = "url('./images/thunderstorm.png')";
       }
@@ -134,24 +152,35 @@ form.addEventListener("submit", function (event) {
 
     //when the favButton is clicked, push some data into the citiesArray[]
     favButton.addEventListener("click", function () {
-      // let temperature = weatherInfo.main.temp
-      // let convertTemp = (temperature - 273.25).toFixed()
-      // let humidity = weatherInfo.main.humidity
-      // let pressure = weatherInfo.main.pressure
-      const cityData = {
-        cityName: city,
-        cityCountry: country,
-        temp: convertTemp,
-        cityHumid: humidity,
-        cityPressure: pressure,
-        weatherICON: weatherIcon.src,
-        weatherDescription: weatherTypeDescription,
-        weatherType: weatherType, //calling this information, to identify the right weather icon
-      };
+      const city = document.querySelector("#location-date").innerText.split(',')[0].trim();
+      const country = document.querySelector("#location-date").innerText.split(',')[1].split('(')[0].trim();
+      const temp = document.querySelector("#main-celsius").innerText.split('°')[0];
+      const weatherDescription = document.querySelector("#weather-type").innerText;
+      const weatherIconSrc = document.querySelector("#weather-icon").src;
 
-      citiesArray.push(cityData);
+      if (isCityFavorite(city, country)) {
+        // Remove from favorites
+        citiesArray = citiesArray.filter(cityData => !(cityData.cityName === city && cityData.cityCountry === country));
+        updateFavButtonState(false);
+      } else {
+        // Add to favorites
+        const cityData = {
+          cityName: city,
+          cityCountry: country,
+          temp: temp,
+          cityHumid: "N/A", // You might want to add this data to the main display
+          cityPressure: "N/A", // You might want to add this data to the main display
+          weatherICON: weatherIconSrc,
+          weatherDescription: weatherDescription,
+          weatherType: weatherDescription,
+        };
+
+        addToFavorites(cityData);
+      }
 
       localStorage.setItem("cityDataStored", JSON.stringify(citiesArray));
+      printFavoriteCities();
+      checkCitiesArray();
     });
   }
 
@@ -159,6 +188,17 @@ form.addEventListener("submit", function (event) {
   fetchCityDataStored();
   checkCitiesArray();
 });
+
+// Add this function to add a city to favorites
+function addToFavorites(cityData) {
+  if (citiesArray.length >= 5) {
+    citiesArray.pop(); // Remove the oldest city if the list is full
+  }
+  citiesArray.unshift(cityData); // Add new city to the beginning of the array
+  localStorage.setItem('favoriteCities', JSON.stringify(citiesArray));
+  printFavoriteCities();
+  checkCitiesArray();
+}
 
 //grab the citydatastored and push to the array
 function fetchCityDataStored() {
@@ -170,80 +210,72 @@ function fetchCityDataStored() {
 }
 
 function printFavoriteCities() {
-  cityList.classList.add("cities");
+  cityList.innerHTML = ''; // Clear existing list
+  citiesArray.forEach((city, index) => {
+    if (index < 5) {
+      let cityDataFav = document.createElement("div");
+      cityDataFav.classList.add("city");
+
+      let favCity = document.createElement("p");
+      favCity.classList.add("stats-city");
+      favCity.textContent = `${city.cityName}, ${city.cityCountry}`;
+
+      let cityTemp = document.createElement("h2");
+      cityTemp.textContent = `${city.temp}°C`;
+
+      let cityCardMainDetails = document.createElement("div");
+      cityCardMainDetails.classList.add("city-card-main-details");
+
+      const weatherIcon = document.createElement("img");
+      weatherIcon.src = city.weatherICON;
+
+      const describeWeather = document.createElement("p");
+      describeWeather.textContent = city.weatherDescription;
+
+      cityCardMainDetails.append(weatherIcon, describeWeather);
+
+      const cityCardMain = document.createElement("div");
+      cityCardMain.classList.add("city-card-main");
+      cityCardMain.append(cityTemp, cityCardMainDetails);
+
+      const statsFig = document.createElement("h3");
+      statsFig.classList.add("stats-fig");
+      statsFig.textContent = city.cityHumid;
+
+      const statsDetail = document.createElement("h3");
+      statsDetail.classList.add("detail");
+      statsDetail.textContent = "Humidity";
+
+      const statsHumidity = document.createElement("div");
+      statsHumidity.classList.add("stats-humidity");
+      statsHumidity.append(statsFig, statsDetail);
+
+      const statsFig1 = document.createElement("h3");
+      statsFig1.classList.add("stats-fig1");
+      statsFig1.textContent = city.cityPressure;
+
+      const statsDetail1 = document.createElement("h3");
+      statsDetail1.classList.add("detail1");
+      statsDetail1.textContent = "Pressure";
+
+      const statsPressure = document.createElement("div");
+      statsPressure.classList.add("stats-pressure");
+      statsPressure.append(statsFig1, statsDetail1);
+
+      const stats = document.createElement("div");
+      stats.classList.add("stats");
+      stats.append(statsHumidity, statsPressure);
+  
+      const statsMobile = document.createElement("p");
+      statsMobile.classList.add("stats-mobile");
+      statsMobile.textContent = city.cityName;
+
+      cityDataFav.append(favCity, cityCardMain, stats, statsMobile);
+      cityList.appendChild(cityDataFav);
+    }
+  });
 
   checkCitiesArray();
-
-  let cityDataFav = document.createElement("div");
-  cityDataFav.classList.add("city");
-
-  cityList.append(cityDataFav);
-
-  let favCity = document.createElement("p");
-  favCity.classList.add("stats-city");
-  favCity.textContent = "cityName";
-
-  let cityTemp = document.createElement("h2");
-  cityTemp.textContent = "temp";
-
-  let cityCardMainDetails = document.createElement("div");
-  cityCardMainDetails.classList.add("city-card-main-details");
-
-  //using weather type here so as to help identify the weather icon
-  let typeOfWeather = document.createElement("p");
-  typeOfWeather.textContent = "weatherType";
-
-  const weatherIcon = document.createElement("img");
-  weatherIcon.src = "weatherICON";
-
-  const describeWeather = document.createElement("p");
-  describeWeather.textContent = "weatherDescription";
-
-  cityCardMainDetails.append(weatherIcon, describeWeather);
-
-  const cityCardMain = document.createElement("div");
-  cityCardMain.classList.add("city-card-main");
-  cityCardMain.append(cityTemp, cityCardMainDetails);
-
-  const statsFig = document.createElement("h3");
-  statsFig.classList.add("stats-fig");
-  statsFig.textContent = "cityHumid"
-
-  const statsDetail = document.createElement("h3");
-  statsDetail.classList.add("detail");
-  statsDetail.textContent = "Humidity";
-
-  const statsHumidity = document.createElement("div");
-  statsHumidity.classList.add("stats-humidity");
-
-  statsHumidity.append(statsFig, statsDetail)
-
-
-  /////////////
-  const statsFig1 = document.createElement("h3");
-  statsFig.classList.add("stats-fig1");
-  statsFig.textContent = "cityHumid"
-
-  const statsDetail1 = document.createElement("h3");
-  statsDetail.classList.add("detail1");
-  statsDetail.textContent = "Pressure";
-
-  const statsPressure = document.createElement("div");
-  statsPressure.classList.add("stats-Pressure");
-
-  statsPressure.append(statsFig1, statsDetail1)
-  /////////////
-
-
-  const stats = document.createElement("div");
-  stats.classList.add("stats");
-  stats.append(statsHumidity, statsPressure)
-  
-  const statsMobile = document.createElement("p");
-  statsMobile.classList.add("stats-mobile");
-
-  cityDataFav.append(favCity, cityCardMain, stats, statsMobile)
 }
-
 
 fetchCityDataStored()
